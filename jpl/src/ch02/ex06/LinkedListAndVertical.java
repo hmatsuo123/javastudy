@@ -1,11 +1,22 @@
 package ch02.ex06;
 
-import ch02.ex01.Vehicle;
 import ch02.ex02.LinkedList;
 
 public class LinkedListAndVertical extends LinkedList {
 
 	public static void main(String[] args) {
+		class Vehicle {
+			public double speed;
+			public double direction;
+			public String owner;
+
+			public Vehicle(double speed, double direction, String owner) {
+				this.speed = speed;
+				this.direction = direction;
+				this.owner = owner;
+			}
+		}
+
 		LinkedListAndVertical linkedList = new LinkedListAndVertical();
 		linkedList.add(new Vehicle(50, 45, "matsuo"));
 		linkedList.add(new Vehicle(100, 90, "hiroki"));

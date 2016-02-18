@@ -12,15 +12,4 @@ public class LinkedListConstructor extends LinkedList {
 		}
 	}
 
-	public static void main(String[] args) {
-		Object targetDate1 = 1;
-		Object targetDate2 = 2;
-		Object[] dataArray = new Object[2];
-		dataArray[0] = targetDate1;
-		dataArray[1] = targetDate2;
-
-		LinkedListConstructor linkedList = new LinkedListConstructor(dataArray);
-		linkedList.set(0);
-	}
-
 }
