@@ -2,24 +2,24 @@ package ch02.ex02;
 
 public class LinkedList {
 	static final int MAX = 10;
-	public Object[] dateArray = new Object[MAX];
-	public Object nextDate;
-	private int index = 0;
+	public Object[] dataArray = new Object[MAX];
+	public Object nextData;
+	public int index = 0;
 
-	public void add(Object date) {
-		dateArray[index] = date;
+	public void add(Object data) {
+		dataArray[index] = data;
 		index++;
 	}
 
 	public void set(int idx) {
 		index = idx;
-		if (dateArray[index + 1] != null)
-			nextDate = dateArray[index + 1];
+		if (dataArray[index + 1] != null)
+			nextData = dataArray[index + 1];
 		else
-			nextDate = dateArray[index];
+			nextData = dataArray[index];
 	}
 
 	public Object getNextDate() {
-		return nextDate;
+		return nextData;
 	}
 }
