@@ -14,7 +14,7 @@ public class ImprovedFibonacciPrintf {
 
 		System.out.printf("1: %2d %n", lo);
 		int index = 2;
-		//TODO:マジックナンバー"2"がわかりにくい。1行目もfor文に入れたほうがよさそう
+
 		for(int i = MAX_INDEX; i >= 2; i--) {
 			if (hi % 2 == 0)
 				mark = " *";
