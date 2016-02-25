@@ -20,7 +20,8 @@ public class ImprovedFibonacciPrintf {
 				mark = " *";
 			else
 				mark = "";
-			System.out.printf(index + ": " + "%2d" + mark + "%n", hi);
+			//System.out.printf(index + ": " + "%2d" + mark + "%n", hi);
+			System.out.printf("%d: %2d %s%n", index, hi, mark);
 			hi = lo + hi;
 			lo = hi - lo;
 			index++;
