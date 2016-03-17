@@ -27,12 +27,12 @@ public class VehicleGarageTest {
 
 		try {
 			Garage clone = garage.clone();
-			if (garage.main(clone)) {
+			if (!garage.main(clone)) {
 				fail("複製失敗");
 			}
 
 			clone.vehicleList[0].speed = 80;
-			if (garage.main(clone)) {
+			if (!garage.main(clone)) {
 				fail("深い複製失敗");
 			}
 

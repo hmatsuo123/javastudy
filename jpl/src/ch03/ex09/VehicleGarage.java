@@ -23,7 +23,19 @@ public class VehicleGarage {
 
 		//cloneチェックメソッド
 		public boolean main(Garage targetGarage) {
-			return this.equals(targetGarage);
+			for (int i = 0; i < targetGarage.vehicleList.length; i++) {
+				if (targetGarage.vehicleList[i] == null) {
+					break;
+				}
+				if ((targetGarage.vehicleList[i].speed != vehicleList[i].speed) ||
+					(targetGarage.vehicleList[i].direction != vehicleList[i].direction) ||
+					(targetGarage.vehicleList[i].owner != vehicleList[i].owner)) {
+					return false;
+				}
+			}
+
+			return true;
+			//return this.equals(targetGarage);
 		}
 	}
 
