@@ -8,7 +8,9 @@ import java.awt.Frame;
 import java.awt.GraphicsEnvironment;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
+import java.awt.GridLayout;
 import java.awt.Label;
+import java.awt.Panel;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
@@ -166,27 +168,26 @@ public class PropertyDialog extends Dialog implements ActionListener{
 		layout.setConstraints(backGroundColorChoice, constraints);
 		add(backGroundColorChoice);
 
+		Panel buttonPanel = new Panel();
+		buttonPanel.setLayout(new GridLayout(1, 2));
+		Label sizeLabel = new Label("Font size [px] ");
+
 		//実行ボタン
 		Button okButton = new Button("OK");
 		okButton.addActionListener(this);
-		constraints.gridx = 1;
-		constraints.gridy = 4;
-		constraints.gridwidth = 1;
-		constraints.gridheight = 1;
-		constraints.anchor = GridBagConstraints.WEST;
-		layout.setConstraints(okButton, constraints);
-		add(okButton);
+		buttonPanel.add(okButton);
 
 		//キャンセルボタン
 		Button cancelButton = new Button("キャンセル");
 		cancelButton.addActionListener(this);
-		constraints.gridx = 0;
+		buttonPanel.add(cancelButton);
+		constraints.gridx = 1;
 		constraints.gridy = 4;
 		constraints.gridwidth = 1;
 		constraints.gridheight = 1;
 		constraints.anchor = GridBagConstraints.EAST;
-		layout.setConstraints(cancelButton, constraints);
-		add(cancelButton);
+		layout.setConstraints(buttonPanel, constraints);
+		add(buttonPanel);
 
 		setTitle("Change Font Property");
 		setSize(350, 170);
