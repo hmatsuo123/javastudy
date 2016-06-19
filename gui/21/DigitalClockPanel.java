@@ -10,20 +10,16 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 
 public class DigitalClockPanel extends JPanel implements Runnable{
+	private final int showTimeInterval = 500;
 	private Dimension panelSize = new Dimension();
 	private Font clockFont = new Font(Font.DIALOG, Font.PLAIN, 100);
 	private Font clockSecondFont = new Font(Font.DIALOG, Font.PLAIN, 60);
 	private Font dateFont = new Font(Font.DIALOG, Font.PLAIN, 20);
-	private final int panelMarginHeight = 0;
+	private final int panelMarginHeight = 10;
 	private final int panelMarginWidth = 60;
 	private final int clockSecondMargin = 20;
 	private Dimension clockTextSize;
-
-	//時計の時間
-	static int h;
-	static int m;
-	static int s;
-	static int ms;
+	public DigitalClockAnimation digitalClockAnimation;
 
 	// このクラスのコンストラクタは外から呼ばない。newInstanceでインスタンスを作成する
 	private DigitalClockPanel() {
@@ -45,6 +41,7 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 		panelSize.height = size1.height + size3.height + panelMarginHeight * 2;
 		System.out.println(panelSize.height);
 		System.out.println(panelSize.width);
+		digitalClockAnimation = new DigitalClockAnimation(panelSize);
 
 		//new Thread(this).start();
 	}
@@ -59,18 +56,13 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 	@Override
 	public void paintComponent(Graphics g) {
 		super.paintComponent(g);
-		g.setColor(Color.GREEN);
-		g.setFont(clockFont);
-		g.drawString(getNowTime(), panelMarginWidth / 2, clockFont.getSize() + panelMarginHeight / 2);
-		g.setFont(clockSecondFont);
-		g.drawString(getNowSecond(), panelMarginWidth / 2 + (int)clockTextSize.getWidth() + clockSecondMargin, clockFont.getSize() + panelMarginHeight / 2);
-
+		digitalClockAnimation.drawTime(g, Color.GREEN, clockFont);
 		setDigitalLayout(g);
 
 		g.setFont(dateFont);
 		g.setColor(new Color(180, 180, 180));
 		// 中央に表示するためマジックナンバーで目視調整
-		g.drawString(getNowDate(), 185, clockFont.getSize() + dateFont.getSize() + panelMarginHeight + 18);
+		g.drawString(getNowDate(), 185, clockFont.getSize() + dateFont.getSize() + panelMarginHeight + 14);
 	};
 
 	@Override
@@ -83,22 +75,26 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 		while(true) {
 			this.repaint();
 			try {
-				Thread.sleep(1000);
+				Thread.sleep(showTimeInterval);
 			} catch (InterruptedException e) {
 				e.printStackTrace();
 			}
 		}
 	}
 
+	/**
+	 * パネル状に黒色の菱形を連続で表示する
+	 */
 	private void setDigitalLayout(Graphics g) {
 		g.setColor(Color.BLACK);
+		// 菱形の直系幅
 		int length = 4;
 		int idxX = 0;
 		int idxY = 0;
 		int xPoints[] = {length / 2, length, length / 2, 0};
 		int yPoints[] = {0, length / 2, length, length / 2};
 
-		while (idxY < this.panelSize.height + panelMarginHeight + 13) {
+		while (idxY < this.panelSize.height + panelMarginHeight) {
 			while (idxX < this.panelSize.getWidth() + panelMarginWidth) {
 				g.fillPolygon(xPoints, yPoints, 4);
 				idxX += length;
@@ -119,9 +115,86 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 			yPoints[2] += length;
 			yPoints[3] += length;
 		}
+	}
 
+	/**
+	 * 時計を左にスライドさせて表示するクラス
+	 */
+	public class DigitalClockAnimation {
+		private Dimension ownerPanelSize = new Dimension();
+		public Boolean isAnimationOn = true;
+		public int moveLength = 8;
+		private int defaultTimeX;
+		private int defaultTimeY;
+		private int defaultSecondTimeX;
+		private int defaultSecondTimeY;
+		private int nowTimeX;
+		private int nowTime2X;
+		private int nowSecondTimeX;
+		private int nowSecondTime2X;
 
+		public DigitalClockAnimation(Dimension size) {
+			ownerPanelSize = size;
+			defaultTimeX = panelMarginWidth / 2;
+			defaultTimeY = clockFont.getSize() + panelMarginHeight / 2;
+			defaultSecondTimeX = panelMarginWidth / 2 + (int)clockTextSize.getWidth() + clockSecondMargin;
+			defaultSecondTimeY = clockFont.getSize() + panelMarginHeight / 2;
+			initNowPosition();
+		}
 
+		private void initNowPosition() {
+			nowTimeX = defaultTimeX;
+			nowTime2X = defaultTimeX + (int)panelSize.getWidth() + panelMarginWidth / 2;
+			nowSecondTimeX = defaultSecondTimeX;
+			nowSecondTime2X = defaultSecondTimeX + (int)panelSize.getWidth() + panelMarginWidth / 2;
+		}
+
+		public void drawTime(Graphics g, Color fontColor, Font font) {
+			int _moveLength = moveLength;
+			if (isAnimationOn) {
+				g.setColor(fontColor);
+				g.setFont(font);
+				nowTimeX -= _moveLength;
+				if (nowTimeX + (int)ownerPanelSize.getWidth() < 0) {
+					nowTimeX = (int)ownerPanelSize.getWidth() + panelMarginWidth;
+				}
+				g.drawString(getNowTime(), nowTimeX, defaultTimeY);
+				nowTime2X -= _moveLength;
+				if (nowTime2X + (int)ownerPanelSize.getWidth() < 0) {
+					nowTime2X = (int)ownerPanelSize.getWidth() + panelMarginWidth;
+				}
+				g.drawString(getNowTime(), nowTime2X, defaultTimeY);
+
+				g.setFont(clockSecondFont);
+				nowSecondTimeX -= _moveLength;
+				if (nowSecondTimeX + (int)ownerPanelSize.getWidth() < 0) {
+					nowSecondTimeX = (int)ownerPanelSize.getWidth() + panelMarginWidth;
+				}
+				g.drawString(getNowSecond(), nowSecondTimeX, defaultSecondTimeY);
+				nowSecondTime2X -= _moveLength;
+				if (nowSecondTime2X + (int)ownerPanelSize.getWidth() < 0) {
+					nowSecondTime2X = (int)ownerPanelSize.getWidth() + panelMarginWidth;
+				}
+				g.drawString(getNowSecond(), nowSecondTime2X, defaultSecondTimeY);
+			} else {
+				g.setColor(fontColor);
+				g.setFont(font);
+				g.drawString(getNowTime(), defaultTimeX, defaultTimeY);
+				g.setFont(clockSecondFont);
+				g.drawString(getNowSecond(), defaultSecondTimeX, defaultSecondTimeY);
+			}
+		}
+
+		public void changeAnimationOn() {
+			System.out.println("changeAnimationOn");
+			isAnimationOn = true;
+		}
+
+		public void changeAnimationOff() {
+			System.out.println("changeAnimationOff");
+			isAnimationOn = false;
+			initNowPosition();
+		}
 	}
 
 	/**
