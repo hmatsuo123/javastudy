@@ -12,6 +12,7 @@ import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
@@ -57,6 +58,7 @@ public class ObjectTreePanel extends JPanel implements ActionListener, ListSelec
 		Object[] treeData = {testData, "obj2", "obj3", "obj4"};
 		tree = new JTree(treeData);*/
 		list = new JList<String>(model);
+		list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		list.addListSelectionListener(this);
 		JScrollPane scrollPanel = new JScrollPane();
 		scrollPanel.getViewport().setView(list);
@@ -66,13 +68,14 @@ public class ObjectTreePanel extends JPanel implements ActionListener, ListSelec
 
 	@Override
 	public void paintComponent(Graphics g) {
+		super.paintComponent(g);
 	}
 
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand() == ButtonContents.NEWOBJECT.getText()) {
 			System.out.println(e.getActionCommand());
-			String value = JOptionPane.showInputDialog(ButtonContents.NEWOBJECT.getText(), "java.awt.Frame");
+			String value = JOptionPane.showInputDialog(ButtonContents.NEWOBJECT.getText(), "java.lang.Integer");
 			if (value != null){
 				// OKボタン押下
 				try {
@@ -83,7 +86,7 @@ public class ObjectTreePanel extends JPanel implements ActionListener, ListSelec
 					//owner.showMessageToConsole("オブジェクト作成", true, null);
 				} catch (ClassNotFoundException e1) {
 					//owner.showMessageToConsole("オブジェクト作成", false, "ClassNotFoundException");
-					JOptionPane.showMessageDialog(this, "ClassNotFoundException");
+					JOptionPane.showMessageDialog(this, e1.toString());
 				}
 			}
 		} else if (e.getActionCommand() == ButtonContents.NEWARRAY.getText()) {
@@ -91,7 +94,7 @@ public class ObjectTreePanel extends JPanel implements ActionListener, ListSelec
 		}
 	};
 
-	public void showNewObject(String name) {
+	public void addNewObject(String name) {
 		model.addElement(name);
 	}
 

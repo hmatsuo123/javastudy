@@ -106,7 +106,11 @@ public class InitializeObjectDialog extends JDialog {
 		if (name == null || name.length() == 0) {
 			JOptionPane.showMessageDialog(this, "Please input Object Name.");
 			return;
+		} else if (owner.isDuplicationObjectName(name)) {
+			JOptionPane.showMessageDialog(this, "Duplication Object Name.");
+			return;
 		}
+
 		// コンストラクタを取得
 		Constructor<?> selectedCons = null;
 		String selectedName = list.getSelectedValue();
@@ -122,16 +126,16 @@ public class InitializeObjectDialog extends JDialog {
 				owner.addNewObject(cls, selectedCons.newInstance(), name);
 				setVisible(false);
 			} catch (InstantiationException e1) {
-				JOptionPane.showMessageDialog(this, "InstantiationException");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (IllegalAccessException e1) {
-				JOptionPane.showMessageDialog(this, "IllegalAccessException");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (IllegalArgumentException e1) {
-				JOptionPane.showMessageDialog(this, "IllegalArgumentException");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (InvocationTargetException e1) {
-				JOptionPane.showMessageDialog(this, "InvocationTargetException");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			}
 		} else {
@@ -184,7 +188,7 @@ public class InitializeObjectDialog extends JDialog {
 								+ paramData[i]);
 						continue;
 					} catch (NumberFormatException e1) {
-						System.out.println("NumberFormatException");
+						System.out.println(e1.toString());
 						return;
 					}
 				} else {
@@ -200,7 +204,7 @@ public class InitializeObjectDialog extends JDialog {
 								+ (i + 1)
 								+ " hasn't string constructor. Inserting null.");
 					} catch (SecurityException e1) {
-						System.out.println("SecurityException");
+						System.out.println(e1.toString());
 						return;
 					}
 					// insert null
@@ -213,28 +217,28 @@ public class InitializeObjectDialog extends JDialog {
 					owner.addNewObject(cls, selectedCons.newInstance(paramData), name);
 				setVisible(false);
 			} catch (InstantiationException e1) {
-				JOptionPane.showMessageDialog(this, "InstantiationException");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (IllegalAccessException e1) {
-				JOptionPane.showMessageDialog(this, "IllegalAccessException");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (IllegalArgumentException e1) {
-				JOptionPane.showMessageDialog(this, "IllegalArgumentException");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (InvocationTargetException e1) {
-				JOptionPane.showMessageDialog(this, "InvocationTargetException");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (OutOfMemoryError e1) {
-				JOptionPane.showMessageDialog(this, "OutOfMemoryError");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (VirtualMachineError e1) {
-				JOptionPane.showMessageDialog(this, "VirtualMachineError");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (Error e1) {
-				JOptionPane.showMessageDialog(this, "Error");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (RuntimeException e1) {
-				JOptionPane.showMessageDialog(this, "RuntimeException");
+				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			}
 		}
