@@ -1,4 +1,4 @@
-package ch22.ex07;
+package ch22.ex08;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
@@ -35,6 +35,8 @@ public class ReadCsvTable {
 	}
 
 	public List<String[]> readCSVTable(Readable source, int cellCount) throws IOException {
+		if (cellCount < 1)
+			throw new IllegalArgumentException();
 		Scanner in = new Scanner(source);
 		List<String[]> vals = new ArrayList<String[]>();
 
@@ -47,12 +49,19 @@ public class ReadCsvTable {
 			if (line != null) {
 				String[] cells = new String[cellCount];
 				MatchResult match = in.match();
-				for (int i = 0; i < cells.length; ++i)
-					cells[i] = match.group(i + 1);
+				String str;
+				for (int i = 0; i < cells.length; ++i) {
+					str = match.group(i + 1);
+					if (str.indexOf(",") != -1)
+						throw new IOException("input format error");
+					else
+						cells[i] = str;
+				}
 				vals.add(cells);
 				in.nextLine();
 			} else {
-				throw new IOException("input format error");
+                if (in.nextLine() != null)
+                    throw new IOException("input format error");
 			}
 		}
 
