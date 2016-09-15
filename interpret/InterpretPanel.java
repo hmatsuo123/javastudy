@@ -21,9 +21,12 @@ public class InterpretPanel extends JPanel{
 	private ObjectTreePanel objectTreePanel;
 	private ControlObjectPanel controlObjPane;
 	private List<ObjectInfo> objList;
+	private List<ArrayInfo> arrayList;
 	private List<String> objNameList;
+	private List<String> arrayNameList;
 	private JTextArea console;
 	private ObjectInfo selectedObj;
+	private ArrayInfo selectedArray;
 
 	class ObjectInfo {
 		protected final Object object;
@@ -35,11 +38,25 @@ public class InterpretPanel extends JPanel{
 		}
 	}
 
+	class ArrayInfo {
+		protected final Object object;
+		protected final String name;		// 現在の仕様ではユニーク値
+		protected final int size;
+
+		public ArrayInfo(Object object, String name, int size) {
+			this.object = object;
+			this.name = name;
+			this.size = size;
+		}
+	}
+
 	public InterpretPanel(JFrame owner) {
 		super();
 		this.owner = owner;
 		objList = new ArrayList<ObjectInfo>();
+		arrayList = new ArrayList<ArrayInfo>();
 		objNameList = new ArrayList<String>();
+		arrayNameList = new ArrayList<String>();
 		setLayout(new BorderLayout());
 
 		JLabel description = new JLabel("作成したオブジェクトと配列に対する操作を行うことができます。");
@@ -78,8 +95,18 @@ public class InterpretPanel extends JPanel{
 		objectTreePanel.addNewObject(name + "(" + cls.getName() + ")");
 	}
 
+	public void addNewArray(Class<?> cls, Object instance, String name, int size) {
+		arrayList.add(new ArrayInfo(instance, name, size));
+		arrayNameList.add(name);
+		objectTreePanel.addNewObject(name + "(" + cls.getName() + "[])");
+	}
+
+	// objectもしくはarrayで同じ名前のインスタンスがないか確認する
 	public Boolean isDuplicationObjectName(String name) {
 		for (String _name : objNameList) {
+			if (_name.equals(name)) return true;
+		}
+		for (String _name : arrayNameList) {
 			if (_name.equals(name)) return true;
 		}
 		return false;
@@ -104,21 +131,34 @@ public class InterpretPanel extends JPanel{
 			list.add(matcher.group(1));
 		}
 		try {
-			Class<?> c = Class.forName(list.get(0));
-			controlObjPane.showControlObjectPanel(c.toString());
+			String targetClass = list.get(0);
+			if (targetClass.indexOf("[]") != -1) {
+				// 配列の場合 TODO:いずれ名前でなく内部フラグ等で判定するようにする
+				Class<?> c = Class.forName(targetClass.replace("[]", ""));
+				String objName = name.replace("(" + list.get(0) + ")", "");
+				for (int i = 0; i < arrayNameList.size(); i++) {
+					if (objName.equals(arrayNameList.get(i))) {
+						selectedArray = arrayList.get(i);
+						selectedObj = null;
+						break;
+					}
+				}
+				controlObjPane.showControlObjectPanelForArray(c.toString(), new ObjectInfo(selectedArray.object, objName), selectedArray);
+			} else {
+				Class<?> c = Class.forName(targetClass);
+				String objName = name.replace("(" + list.get(0) + ")", "");
+				for (int i = 0; i < objNameList.size(); i++) {
+					if (objName.equals(objNameList.get(i))) {
+						selectedObj = objList.get(i);
+						selectedArray = null;
+						break;
+					}
+				}
+				controlObjPane.showControlObjectPanel(c.toString(), selectedObj);
+			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
 		}
-
-		String objName = name.replace("(" + list.get(0) + ")", "");
-		for (int i = 0; i < objNameList.size(); i++) {
-			if (objName.equals(objNameList.get(i))) {
-				selectedObj = objList.get(i);
-				break;
-			}
-		}
-		controlObjPane.setFieldsToList(selectedObj);
-		controlObjPane.setMethodsToList(selectedObj);
 	}
 
 	public void setNewFieldValue(Field field, String value) {
@@ -144,6 +184,16 @@ public class InterpretPanel extends JPanel{
 		}
 	}
 
+	// 自作したクラスが存在すればそのインスタンスを返す
+	private Object getObject(String name) {
+		for (ObjectInfo e : objList) {
+			if (e.name.equals(name))
+                return e.object;
+		}
+
+        return null;
+	}
+
 	public void invokeMethod(Method method, String parameter) {
 		try {
 			if (method == null) {
@@ -160,31 +210,50 @@ public class InterpretPanel extends JPanel{
 			} else {
 				for (int i = 0; i < args.length; i++) {
 					if (params[i] == "") continue;
-					try {
-						if (args[i].equals(int.class))
-							paramData[i] = Integer.parseInt(params[i]);
-						else if (args[i].equals(double.class))
-							paramData[i] = Double.parseDouble(params[i]);
-						else if (args[i].equals(float.class))
-							paramData[i] = Float.parseFloat(params[i]);
-						else if (args[i].equals(short.class))
-							paramData[i] = Short.parseShort(params[i]);
-						else if (args[i].equals(char.class))
-							paramData[i] = (char) Integer.parseInt(params[i]);
-						else if (args[i].equals(byte.class))
-							paramData[i] = Byte.parseByte(params[i]);
-						else if (args[i].equals(boolean.class))
-							paramData[i] = Boolean.parseBoolean(params[i]);
-						else if (args[i].equals(String.class))
+					else if (params[i].startsWith("'")) {
+						// ' 'で囲まれた文字列は自作したクラス
+						String regex = "\'(.+?)\'";
+						List<String> list = new ArrayList<String>();
+						Pattern pattern = Pattern.compile(regex);
+						Matcher matcher = pattern.matcher(params[i]);
+						while (matcher.find()) {
+							list.add(matcher.group(1));
+						}
+
+						Object obj = getObject(list.get(0));
+						if (obj == null) {
+							JOptionPane.showMessageDialog(this, "Array not found: " + list.get(0));
+	                        return;
+	                    } else {
+	                    	paramData[i] = obj;
+	                    }
+					} else {
+						try {
+							if (args[i].equals(int.class))
+								paramData[i] = Integer.parseInt(params[i]);
+							else if (args[i].equals(double.class))
+								paramData[i] = Double.parseDouble(params[i]);
+							else if (args[i].equals(float.class))
+								paramData[i] = Float.parseFloat(params[i]);
+							else if (args[i].equals(short.class))
+								paramData[i] = Short.parseShort(params[i]);
+							else if (args[i].equals(char.class))
+								paramData[i] = (char) Integer.parseInt(params[i]);
+							else if (args[i].equals(byte.class))
+								paramData[i] = Byte.parseByte(params[i]);
+							else if (args[i].equals(boolean.class))
+								paramData[i] = Boolean.parseBoolean(params[i]);
+							else if (args[i].equals(String.class))
+								continue;
+							else {
+								JOptionPane.showMessageDialog(this, "Unknown type");
+								return;
+							}
 							continue;
-						else {
-							JOptionPane.showMessageDialog(this, "Unknown type");
+						} catch (Exception e) {
+							JOptionPane.showMessageDialog(this, e.toString());
 							return;
 						}
-						continue;
-					} catch (Exception e) {
-						JOptionPane.showMessageDialog(this, e.toString());
-						return;
 					}
 				}
 			}

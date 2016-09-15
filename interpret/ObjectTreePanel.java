@@ -74,7 +74,7 @@ public class ObjectTreePanel extends JPanel implements ActionListener, ListSelec
 	@Override
 	public void actionPerformed(ActionEvent e) {
 		if (e.getActionCommand() == ButtonContents.NEWOBJECT.getText()) {
-			System.out.println(e.getActionCommand());
+			//System.out.println(e.getActionCommand());
 			String value = JOptionPane.showInputDialog(ButtonContents.NEWOBJECT.getText(), "java.lang.Integer");
 			if (value != null){
 				// OKボタン押下
@@ -90,7 +90,16 @@ public class ObjectTreePanel extends JPanel implements ActionListener, ListSelec
 				}
 			}
 		} else if (e.getActionCommand() == ButtonContents.NEWARRAY.getText()) {
-
+			String value = JOptionPane.showInputDialog(ButtonContents.NEWARRAY.getText(), "java.lang.String");
+			if (value != null){
+				// OKボタン押下
+				try {
+					Class<?> cls = Class.forName(value);
+					new InitializeArrayDialog(owner, cls, value);
+				} catch (ClassNotFoundException e1) {
+					JOptionPane.showMessageDialog(this, e1.toString());
+				}
+			}
 		}
 	};
 

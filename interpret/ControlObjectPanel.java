@@ -1,7 +1,9 @@
 package interpret;
 
+import interpret.InterpretPanel.ArrayInfo;
 import interpret.InterpretPanel.ObjectInfo;
 
+import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -42,6 +44,13 @@ public class ControlObjectPanel extends JPanel{
 	private Method targetMethod;
 	private JTextField newValueText;
 	private JTextField parameterText;
+	private Boolean isArray = false;
+	private JLabel isArrayLabel;
+	private DefaultTableModel arrayTableModel;
+	private JTable arrayTable;
+	private List<Integer> arrayTableList;
+	private Integer targetArrayElm;
+	private JTextField newArrayValueText;
 
 	public ControlObjectPanel(InterpretPanel owner) {
 		super();
@@ -58,10 +67,51 @@ public class ControlObjectPanel extends JPanel{
 		//objectInfoPanel.setBackground(Color.WHITE);
 		JPanel tmp = new JPanel();
 		//tmp.setBackground(Color.WHITE);
-		tmp.setBorder(new TitledBorder("オブジェクト情報"));
-		//selectedObjectNameLabel = new JLabel("   public class ObjectControllPanel extends JPanel");
+		tmp.setBorder(new TitledBorder("Object Info"));
+		JPanel objectInfoDetailPanel = new JPanel();
+		objectInfoDetailPanel.setLayout(new BoxLayout(objectInfoDetailPanel, BoxLayout.Y_AXIS));
 		selectedObjectNameLabel = new JLabel("                                                           ");
-		tmp.add(selectedObjectNameLabel);
+		objectInfoDetailPanel.add(selectedObjectNameLabel);
+
+		String[] arrayColumnNames = {"Index", "Value"};
+		arrayTableModel = new DefaultTableModel(arrayColumnNames, 0);
+		arrayTable = new JTable(arrayTableModel);
+		arrayTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
+		arrayTable.addMouseListener(new MouseAdapter() {
+			public void mouseClicked(MouseEvent e) {
+				//選択行の行番号を取得します
+				int idx = arrayTable.getSelectedRow();
+				//選択行の1番目のカラムの内容を取得します。
+				//String value = (String)arrayTable.getValueAt( idx, 1 );
+				//newValueText.setText(value);
+				//targetField = fieldTableList.get(idx);
+			}
+		});
+		JScrollPane jsp = new JScrollPane(arrayTable);
+		jsp.setPreferredSize(new Dimension(450, 100));
+		objectInfoDetailPanel.add(jsp);
+
+		JLabel newArrayValueLabel = new JLabel("New Value");
+		newArrayValueLabel.setHorizontalAlignment(JLabel.LEFT);
+		objectInfoDetailPanel.add(newArrayValueLabel);
+		newArrayValueText = new JTextField();
+		objectInfoDetailPanel.add(newArrayValueText);
+		JButton upDateArrayButton = new JButton("UpDate");
+		upDateArrayButton.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent event){
+						if (newArrayValueLabel.getText() != null || newArrayValueLabel.getText() != "") {
+							//owner.setNewFieldValue(targetArrayElm, newArrayValueLabel.getText());
+						}
+					}
+				});
+		objectInfoDetailPanel.add(upDateArrayButton);
+
+
+
+		//isArrayLabel = new JLabel("");
+		//objectInfoDetailPanel.add(isArrayLabel);
+		tmp.add(objectInfoDetailPanel);
 		objectInfoPanel.add(tmp);
 		add(objectInfoPanel);
 
@@ -171,8 +221,21 @@ public class ControlObjectPanel extends JPanel{
 		super.paintComponent(g);
 	}
 
-	public void showControlObjectPanel(String objName) {
+	public void showControlObjectPanel(String objName, ObjectInfo targetObj) {
 		selectedObjectNameLabel.setText(objName);
+		isArrayLabel.setText("Object Class");
+		isArray = false;
+		setFieldsToList(targetObj);
+		setMethodsToList(targetObj);
+	}
+
+	public void showControlObjectPanelForArray(String objName, ObjectInfo targetObj, ArrayInfo arrayInfo) {
+		selectedObjectNameLabel.setText(objName);
+		isArrayLabel.setText("Array Class");
+		isArray = true;
+		setFieldsToList(targetObj);
+		setMethodsToList(targetObj);
+
 	}
 
 	public void setFieldsToList(ObjectInfo obj) {
@@ -265,6 +328,55 @@ public class ControlObjectPanel extends JPanel{
 			}
 			catch (Exception e) {
 				// TODO 自動生成された catch ブロック
+				e.printStackTrace();
+			}
+		}
+	}
+
+	public void setArrayElmToList(ObjectInfo obj, ArrayInfo array) {
+		// テーブルのデータをすべて削除
+		if (arrayTableModel.getRowCount() > 0) {
+		    for (int i = arrayTableModel.getRowCount() - 1; i > -1; i--) {
+		    	arrayTableModel.removeRow(i);
+		    }
+		}
+		arrayTableList.clear();
+		targetArrayElm = null;
+		newArrayValueText.setText("");
+
+		/*for (int i = 0; i < array.size; i++) {
+			fieldTableModel.addRow(array.object[i]);
+			fieldTableList.add(array.object[i]);
+			;
+		}*/
+
+		Class<?> c = obj.object.getClass();
+
+
+		//Field[] fields   = c.getDeclaredFields();
+		Set<Field> fieldSet = new HashSet<Field>();
+		for (Field m : c.getFields())
+			fieldSet.add(m);
+		for (Field m : c.getDeclaredFields())
+			fieldSet.add(m);
+		List<Field> fieldList = new ArrayList<Field>(fieldSet);
+		for( int i=0; i<fieldList.size(); i++ ){
+			try {
+				Field field = fieldList.get(i);
+				field.setAccessible(true);
+				String name = field.getName();
+				String modifiers = "";
+				String[] strs = field.toString().split(" ", 0);
+				for (String str : strs) {
+					if (str.indexOf(name) == -1) modifiers += str + " ";
+				}
+
+				String value = field.get(obj.object).toString();
+				String str[] = {modifiers, name, value};
+				fieldTableModel.addRow(str);
+				fieldTableList.add(field);
+			}
+			catch (Exception e) {
 				e.printStackTrace();
 			}
 		}
