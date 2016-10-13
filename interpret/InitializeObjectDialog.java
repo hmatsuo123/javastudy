@@ -164,7 +164,6 @@ public class InitializeObjectDialog extends JDialog {
 					inputParam = inputParams.get(i);
 				} catch (IndexOutOfBoundsException ioobe) {
 					paramData[i] = null;
-					System.out.println("paramData[" + i + "]=(null)");
 					continue;
 				}
 				if (inputParam.equals("null")) {

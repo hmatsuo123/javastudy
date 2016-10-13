@@ -4,6 +4,7 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Graphics;
 import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
@@ -246,7 +247,14 @@ public class InterpretPanel extends JPanel{
 							list.add(matcher.group(1));
 						}
 
-						Object obj = getObject(list.get(0));
+						String param;
+						try {
+							param = list.get(0);
+						} catch (IndexOutOfBoundsException ioobe) {
+							param = null;
+						}
+
+						Object obj = getObject(param);
 						if (obj == null) {
 							JOptionPane.showMessageDialog(this, "Array not found: " + list.get(0));
 	                        return;
@@ -255,6 +263,10 @@ public class InterpretPanel extends JPanel{
 	                    }
 					} else {
 						try {
+							if (params[i].equals("")) {
+								params[i] = null;
+								continue;
+							}
 							if (args[i].equals(int.class))
 								paramData[i] = Integer.parseInt(params[i]);
 							else if (args[i].equals(double.class))
@@ -294,6 +306,9 @@ public class InterpretPanel extends JPanel{
 				// テーブルを再表示
 				controlObjPane.setMethodsToList(selectedObj);
 				JOptionPane.showMessageDialog(this, "Result: " + result);
+			} catch (InvocationTargetException e1) {
+				JOptionPane.showMessageDialog(this, e1.getTargetException());
+				return;
 			} catch (Exception e) {
 				JOptionPane.showMessageDialog(this, e.toString());
 				return;
