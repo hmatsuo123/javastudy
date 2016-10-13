@@ -81,7 +81,7 @@ public class ObjectTreePanel extends JPanel implements ActionListener, ListSelec
 				try {
 					//owner.createNewObject(Class.forName(value));
 					Class<?> cls = Class.forName(value);
-					new InitializeObjectDialog(owner, cls, value);
+					new InitializeObjectDialog(owner, cls, value, false, -1, null);
 
 					//owner.showMessageToConsole("オブジェクト作成", true, null);
 				} catch (ClassNotFoundException e1) {
@@ -110,7 +110,7 @@ public class ObjectTreePanel extends JPanel implements ActionListener, ListSelec
 	@Override
 	public void valueChanged(ListSelectionEvent e) {
 		if(e.getSource() == list){
-			owner.changeControlObjectPanel(list.getSelectedValue().toString());
+			owner.changeControlObjectPanel(list.getSelectedValue().toString(), false, -1);
 		}
 	}
 }

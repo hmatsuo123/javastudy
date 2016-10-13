@@ -31,22 +31,26 @@ public class InterpretPanel extends JPanel{
 	class ObjectInfo {
 		protected final Object object;
 		protected final String name;		// 現在の仕様ではユニーク値
+		protected final Class<?> cls;
 
-		public ObjectInfo(Object object, String name) {
+		public ObjectInfo(Object object, String name, Class<?> cls) {
 			this.object = object;
 			this.name = name;
+			this.cls = cls;
 		}
 	}
 
 	class ArrayInfo {
-		protected final Object object;
-		protected final String name;		// 現在の仕様ではユニーク値
+		protected  Object object;
+		protected String name;		// 現在の仕様ではユニーク値
 		protected final int size;
+		protected String[] childNames;
 
 		public ArrayInfo(Object object, String name, int size) {
 			this.object = object;
 			this.name = name;
 			this.size = size;
+			this.childNames = new String[size];
 		}
 	}
 
@@ -90,9 +94,24 @@ public class InterpretPanel extends JPanel{
 	}*/
 
 	public void addNewObject(Class<?> cls, Object instance, String name) {
-		objList.add(new ObjectInfo(instance, name));
+		objList.add(new ObjectInfo(instance, name, cls));
 		objNameList.add(name);
 		objectTreePanel.addNewObject(name + "(" + cls.getName() + ")");
+	}
+
+	public void addNewObjectToArray(Class<?> cls, Object instance, String name, int arrayIdx, String targetArrayName) {
+		for (ArrayInfo arrayInfo : arrayList) {
+			if (arrayInfo.name.equals(targetArrayName)) {
+				Object[] tmp = (Object[]) arrayInfo.object;
+				tmp[arrayIdx] = instance;
+				arrayInfo.childNames[arrayIdx] = name;
+				//selectedArray = arrayInfo;
+			}
+		}
+		selectedObj = new ObjectInfo(instance, name, cls);
+
+		// フィールドを更新
+		changeControlObjectPanel(cls.getName(), true, arrayIdx);
 	}
 
 	public void addNewArray(Class<?> cls, Object instance, String name, int size) {
@@ -122,14 +141,19 @@ public class InterpretPanel extends JPanel{
 
 	}
 
-	public void changeControlObjectPanel(String name) {
-		String regex = "\\((.+?)\\)";
+	public void changeControlObjectPanel(String name, Boolean isArray, int arrayIdx) {
 		List<String> list = new ArrayList<String>();
-		Pattern pattern = Pattern.compile(regex);
-		Matcher matcher = pattern.matcher(name);
-		while (matcher.find()) {
-			list.add(matcher.group(1));
+		if (isArray) {
+			list.add(name);
+		} else {
+			String regex = "\\((.+?)\\)";
+			Pattern pattern = Pattern.compile(regex);
+			Matcher matcher = pattern.matcher(name);
+			while (matcher.find()) {
+				list.add(matcher.group(1));
+			}
 		}
+
 		try {
 			String targetClass = list.get(0);
 			if (targetClass.indexOf("[]") != -1) {
@@ -143,7 +167,7 @@ public class InterpretPanel extends JPanel{
 						break;
 					}
 				}
-				controlObjPane.showControlObjectPanelForArray(c.toString(), new ObjectInfo(selectedArray.object, objName), selectedArray);
+				controlObjPane.showControlObjectPanelForArray(c.toString(), new ObjectInfo(selectedArray.object, objName, c), selectedArray);
 			} else {
 				Class<?> c = Class.forName(targetClass);
 				String objName = name.replace("(" + list.get(0) + ")", "");
@@ -155,6 +179,8 @@ public class InterpretPanel extends JPanel{
 					}
 				}
 				controlObjPane.showControlObjectPanel(c.toString(), selectedObj);
+				if (isArray)
+					controlObjPane.setArrayElmToList(new ObjectInfo(selectedArray.object, selectedArray.name, c), selectedArray, arrayIdx);
 			}
 		} catch (ClassNotFoundException e) {
 			e.printStackTrace();
@@ -279,5 +305,16 @@ public class InterpretPanel extends JPanel{
 			//showMessageToConsole("", false, e.toString());
 			JOptionPane.showMessageDialog(this, e.toString());
 		}
+	}
+
+	public String GetSelectedArrayName() {
+		return selectedArray.name;
+	}
+
+	public ObjectInfo GetSelectedObj(int idx) {
+		Object[] tmp = (Object[]) selectedArray.object;
+		String[] tmp2 = selectedArray.childNames;
+		selectedObj = new ObjectInfo(tmp[idx], tmp2[idx], tmp[idx].getClass());
+		return selectedObj;
 	}
 }

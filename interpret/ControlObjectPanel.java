@@ -45,12 +45,13 @@ public class ControlObjectPanel extends JPanel{
 	private JTextField newValueText;
 	private JTextField parameterText;
 	private Boolean isArray = false;
-	private JLabel isArrayLabel;
+	//private JLabel isArrayLabel;
 	private DefaultTableModel arrayTableModel;
 	private JTable arrayTable;
 	private List<Integer> arrayTableList;
 	private Integer targetArrayElm;
 	private JTextField newArrayValueText;
+	private ObjectInfo targetObjectInfo;
 
 	public ControlObjectPanel(InterpretPanel owner) {
 		super();
@@ -73,16 +74,33 @@ public class ControlObjectPanel extends JPanel{
 		selectedObjectNameLabel = new JLabel("                                                           ");
 		objectInfoDetailPanel.add(selectedObjectNameLabel);
 
-		String[] arrayColumnNames = {"Index", "Value"};
+		String[] arrayColumnNames = {"Index", "Name"};
 		arrayTableModel = new DefaultTableModel(arrayColumnNames, 0);
 		arrayTable = new JTable(arrayTableModel);
 		arrayTable.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 		arrayTable.addMouseListener(new MouseAdapter() {
 			public void mouseClicked(MouseEvent e) {
 				//選択行の行番号を取得します
-				int idx = arrayTable.getSelectedRow();
+				targetArrayElm = arrayTable.getSelectedRow();
 				//選択行の1番目のカラムの内容を取得します。
-				//String value = (String)arrayTable.getValueAt( idx, 1 );
+				String value = (String)arrayTable.getValueAt( targetArrayElm, 1 );
+				if (value != "null") {
+					targetObjectInfo = owner.GetSelectedObj(targetArrayElm);
+					setFieldsToList(targetObjectInfo);
+					setMethodsToList(targetObjectInfo);
+				} else {
+					// テーブルのデータをすべて削除
+					if (fieldTableModel.getRowCount() > 0) {
+						for (int i = fieldTableModel.getRowCount() - 1; i > -1; i--) {
+							fieldTableModel.removeRow(i);
+						}
+					}
+					if (methodTableModel.getRowCount() > 0) {
+						for (int i = methodTableModel.getRowCount() - 1; i > -1; i--) {
+							methodTableModel.removeRow(i);
+						}
+					}
+				}
 				//newValueText.setText(value);
 				//targetField = fieldTableList.get(idx);
 			}
@@ -93,14 +111,15 @@ public class ControlObjectPanel extends JPanel{
 
 		JLabel newArrayValueLabel = new JLabel("New Value");
 		newArrayValueLabel.setHorizontalAlignment(JLabel.LEFT);
-		objectInfoDetailPanel.add(newArrayValueLabel);
+		//objectInfoDetailPanel.add(newArrayValueLabel);
 		newArrayValueText = new JTextField();
-		objectInfoDetailPanel.add(newArrayValueText);
+		//objectInfoDetailPanel.add(newArrayValueText);
 		JButton upDateArrayButton = new JButton("UpDate");
 		upDateArrayButton.addActionListener(
 				new ActionListener(){
 					public void actionPerformed(ActionEvent event){
-						if (newArrayValueLabel.getText() != null || newArrayValueLabel.getText() != "") {
+						if (targetArrayElm != null) {
+							new InitializeObjectDialog(owner, targetObjectInfo.cls, targetObjectInfo.cls.getName(), true, targetArrayElm, owner.GetSelectedArrayName());
 							//owner.setNewFieldValue(targetArrayElm, newArrayValueLabel.getText());
 						}
 					}
@@ -154,15 +173,8 @@ public class ControlObjectPanel extends JPanel{
 				targetField = fieldTableList.get(idx);
 			}
 		});
-		// テストデータ
-		/*String str[] = {"1", "11", "111"};
-		fieldTableModel.addRow(str);
-		String str2[] = {"2", "22", "222"};
-		fieldTableModel.addRow(str2);
-		String str3[] = {"1", "11", "111"};
-		fieldTableModel.addRow(str3);*/
 		JScrollPane sp = new JScrollPane(fieldTable);
-	    //sp.setPreferredSize(new Dimension(250, 90));
+		//sp.setPreferredSize(new Dimension(250, 90));
 		fieldPanel.add(sp);
 		JLabel newValueLabel = new JLabel("New Value");
 		newValueLabel.setHorizontalAlignment(JLabel.LEFT);
@@ -180,8 +192,6 @@ public class ControlObjectPanel extends JPanel{
 				});
 		fieldPanel.add(upDateButton);
 
-		/*JLabel buf = new JLabel("                         ");
-		fieldPanel.add(buf);*/
 		tabPanel.addTab("Field", fieldPanel);
 		JPanel methodPanel = new JPanel();
 		methodPanel.setLayout(new BoxLayout(methodPanel, BoxLayout.Y_AXIS));
@@ -222,28 +232,51 @@ public class ControlObjectPanel extends JPanel{
 	}
 
 	public void showControlObjectPanel(String objName, ObjectInfo targetObj) {
-		selectedObjectNameLabel.setText(objName);
-		isArrayLabel.setText("Object Class");
+		targetObjectInfo = targetObj;
+		selectedObjectNameLabel.setText(objName + "(Object)");
+		//isArrayLabel.setText("Object Class");
 		isArray = false;
 		setFieldsToList(targetObj);
 		setMethodsToList(targetObj);
+
+		// テーブルのデータをすべて削除
+		if (arrayTableModel.getRowCount() > 0) {
+			for (int i = arrayTableModel.getRowCount() - 1; i > -1; i--) {
+				arrayTableModel.removeRow(i);
+			}
+		}
 	}
 
 	public void showControlObjectPanelForArray(String objName, ObjectInfo targetObj, ArrayInfo arrayInfo) {
-		selectedObjectNameLabel.setText(objName);
-		isArrayLabel.setText("Array Class");
+		targetObjectInfo = targetObj;
+		selectedObjectNameLabel.setText(objName + "[](Array)");
+		//isArrayLabel.setText("Array Class");
 		isArray = true;
-		setFieldsToList(targetObj);
-		setMethodsToList(targetObj);
 
+		//setFieldsToList(targetObj);
+		//setMethodsToList(targetObj);
+
+		// テーブルのデータをすべて削除
+		if (fieldTableModel.getRowCount() > 0) {
+			for (int i = fieldTableModel.getRowCount() - 1; i > -1; i--) {
+				fieldTableModel.removeRow(i);
+			}
+		}
+		if (methodTableModel.getRowCount() > 0) {
+			for (int i = methodTableModel.getRowCount() - 1; i > -1; i--) {
+				methodTableModel.removeRow(i);
+			}
+		}
+
+		setArrayElmToList(targetObj, arrayInfo, -1);
 	}
 
 	public void setFieldsToList(ObjectInfo obj) {
 		// テーブルのデータをすべて削除
 		if (fieldTableModel.getRowCount() > 0) {
-		    for (int i = fieldTableModel.getRowCount() - 1; i > -1; i--) {
-		    	fieldTableModel.removeRow(i);
-		    }
+			for (int i = fieldTableModel.getRowCount() - 1; i > -1; i--) {
+				fieldTableModel.removeRow(i);
+			}
 		}
 		fieldTableList.clear();
 		targetField = null;
@@ -282,9 +315,9 @@ public class ControlObjectPanel extends JPanel{
 	public void setMethodsToList(ObjectInfo obj) {
 		// テーブルのデータをすべて削除
 		if (methodTableModel.getRowCount() > 0) {
-		    for (int i = methodTableModel.getRowCount() - 1; i > -1; i--) {
-		    	methodTableModel.removeRow(i);
-		    }
+			for (int i = methodTableModel.getRowCount() - 1; i > -1; i--) {
+				methodTableModel.removeRow(i);
+			}
 		}
 		methodTableList.clear();
 		targetMethod = null;
@@ -333,25 +366,31 @@ public class ControlObjectPanel extends JPanel{
 		}
 	}
 
-	public void setArrayElmToList(ObjectInfo obj, ArrayInfo array) {
+	public void setArrayElmToList(ObjectInfo obj, ArrayInfo array, int arrayIdx) {
 		// テーブルのデータをすべて削除
 		if (arrayTableModel.getRowCount() > 0) {
-		    for (int i = arrayTableModel.getRowCount() - 1; i > -1; i--) {
-		    	arrayTableModel.removeRow(i);
-		    }
+			for (int i = arrayTableModel.getRowCount() - 1; i > -1; i--) {
+				arrayTableModel.removeRow(i);
+			}
 		}
-		arrayTableList.clear();
+		//arrayTableList.clear();
 		targetArrayElm = null;
+		targetField = null;
+		targetMethod = null;
 		newArrayValueText.setText("");
 
-		/*for (int i = 0; i < array.size; i++) {
-			fieldTableModel.addRow(array.object[i]);
-			fieldTableList.add(array.object[i]);
-			;
-		}*/
+		for (int i = 0; i < array.size; i++) {
+			Object[] tmp = (Object[]) array.object;
+			String[] tmp2 = (String[])array.childNames;
+			String str[] = {String.valueOf(i), tmp[i] != null ? tmp2[i] : "null"};
+			arrayTableModel.addRow(str);
+		}
+		if (arrayIdx != -1) {
+			// 行を選択状態にする
+			arrayTable.setRowSelectionInterval(arrayIdx, arrayIdx);
+		}
 
-		Class<?> c = obj.object.getClass();
-
+		/*Class<?> c = obj.object.getClass();
 
 		//Field[] fields   = c.getDeclaredFields();
 		Set<Field> fieldSet = new HashSet<Field>();
@@ -379,6 +418,6 @@ public class ControlObjectPanel extends JPanel{
 			catch (Exception e) {
 				e.printStackTrace();
 			}
-		}
+		}*/
 	}
 }

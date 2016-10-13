@@ -23,6 +23,7 @@ public class InitializeArrayDialog extends JDialog{
 		this.setModal(true);
 		this.owner = owner;
 		this.cls = cls;
+
 		//model = new DefaultListModel<String>();
 		//setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setLayout(new GridLayout(9, 1));

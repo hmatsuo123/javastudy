@@ -28,12 +28,18 @@ public class InitializeObjectDialog extends JDialog {
 	//private DefaultListModel<String> model;
 	JList<String> list;
 	private Set<Constructor<?>> constructors;
+	Boolean isNewArray;
+	int arrayIdx;
+	String targetArrayName;
 
-	public InitializeObjectDialog(InterpretPanel owner, Class<?> cls, String name) {
+	public InitializeObjectDialog(InterpretPanel owner, Class<?> cls, String name, Boolean isArray, int idx, String targetArrayName) {
 		super();
 		this.setModal(true);
 		this.owner = owner;
 		this.cls = cls;
+		this.isNewArray = isArray;
+		this.arrayIdx = idx;
+		this.targetArrayName = targetArrayName;
 		//model = new DefaultListModel<String>();
 		//setLayout(new BoxLayout(this, BoxLayout.Y_AXIS));
 		setLayout(new GridLayout(9, 1));
@@ -123,7 +129,10 @@ public class InitializeObjectDialog extends JDialog {
 		if (params == null || params.length == 0) {
 			// 引数なしのコンストラクタの場合
 			try {
-				owner.addNewObject(cls, selectedCons.newInstance(), name);
+				if (isNewArray)
+					owner.addNewObjectToArray(cls, selectedCons.newInstance(), name, arrayIdx, targetArrayName);
+				else
+					owner.addNewObject(cls, selectedCons.newInstance(), name);
 				setVisible(false);
 			} catch (InstantiationException e1) {
 				JOptionPane.showMessageDialog(this, e1.toString());
@@ -135,7 +144,7 @@ public class InitializeObjectDialog extends JDialog {
 				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (InvocationTargetException e1) {
-				JOptionPane.showMessageDialog(this, e1.toString());
+				JOptionPane.showMessageDialog(this, e1.getTargetException());
 				return;
 			}
 		} else {
@@ -188,6 +197,7 @@ public class InitializeObjectDialog extends JDialog {
 								+ paramData[i]);
 						continue;
 					} catch (NumberFormatException e1) {
+						JOptionPane.showMessageDialog(this, e1.toString());
 						System.out.println(e1.toString());
 						return;
 					}
@@ -205,6 +215,7 @@ public class InitializeObjectDialog extends JDialog {
 								+ " hasn't string constructor. Inserting null.");
 					} catch (SecurityException e1) {
 						System.out.println(e1.toString());
+						JOptionPane.showMessageDialog(this, e1.toString());
 						return;
 					}
 					// insert null
@@ -214,7 +225,11 @@ public class InitializeObjectDialog extends JDialog {
 			}
 			// Instantiate with parameter(s)
 			try {
+				if (isNewArray)
+					owner.addNewObjectToArray(cls, selectedCons.newInstance(paramData), name, arrayIdx, targetArrayName);
+				else
 					owner.addNewObject(cls, selectedCons.newInstance(paramData), name);
+
 				setVisible(false);
 			} catch (InstantiationException e1) {
 				JOptionPane.showMessageDialog(this, e1.toString());
@@ -226,7 +241,8 @@ public class InitializeObjectDialog extends JDialog {
 				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
 			} catch (InvocationTargetException e1) {
-				JOptionPane.showMessageDialog(this, e1.toString());
+				//JOptionPane.showMessageDialog(this, e1.toString());
+				JOptionPane.showMessageDialog(this, e1.getTargetException());
 				return;
 			} catch (OutOfMemoryError e1) {
 				JOptionPane.showMessageDialog(this, e1.toString());
@@ -240,6 +256,8 @@ public class InitializeObjectDialog extends JDialog {
 			} catch (RuntimeException e1) {
 				JOptionPane.showMessageDialog(this, e1.toString());
 				return;
+			} catch (Exception e1) {
+				JOptionPane.showMessageDialog(this, e1.toString());
 			}
 		}
 	}
