@@ -25,20 +25,30 @@ public class SlidePuzzlePanel extends JPanel implements IClockEventListener{
 	private final int GRID_WIDTH;    		//マスの横幅
 	private final int GRID_HEIGHT;    		//マスの縦幅
 	private int gameStatus;					//ゲーム状態フラグ
-	private SlideGridInfo GInfo;					//グリッドクラス
+	private SlideGridInfo GInfo;			//グリッドクラス
 	public boolean isHintShow = false;
 
-	public SlidePuzzlePanel(int panelWidth, int panelHeight, int intGridXNum, int intGridYNum, DigitalClockPanel panel) {
+
+	/**
+	 * コンストラクタ
+	 *
+	 * @param panelWidth パネルの幅
+	 * @param panelHeight パネルの高さ
+	 * @param boardColNum ボード数(横)
+	 * @param boardRowNum ボード数(縦)
+	 * @param panel 画面をキャプチャ対象のDigitalClockPanel
+	 */
+	public SlidePuzzlePanel(int panelWidth, int panelHeight, int boardColNum, int boardRowNum, DigitalClockPanel panel) {
 		super();
 		slidePuzzlePanel = this;
 		// ダブルバッファリングを行うとなぜかちらついてしまう
 		setDoubleBuffered(false);
 		panelSize.width = panelWidth;
 		panelSize.height = panelHeight;
-		GRID_X = intGridXNum;
-		GRID_Y = intGridYNum;
-		GRID_WIDTH = panelWidth / intGridXNum;
-		GRID_HEIGHT = panelHeight / intGridYNum;
+		GRID_X = boardColNum;
+		GRID_Y = boardRowNum;
+		GRID_WIDTH = panelWidth / boardColNum;
+		GRID_HEIGHT = panelHeight / boardRowNum;
 
 		clockPanel = panel;
 		setBackground(Color.WHITE);

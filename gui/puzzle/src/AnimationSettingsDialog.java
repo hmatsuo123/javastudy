@@ -21,13 +21,14 @@ import puzzle.DigitalClockPanel.AnimationMode;
 
 public class AnimationSettingsDialog extends JDialog {
 	private DigitalClockPanel panel;
-	private final int LEFT = 0;
-	private final int RIGHT = 1;
+	private static final int LEFT = 0;
+	private static final int RIGHT = 1;
 	private JRadioButton radioOn;
 	private JRadioButton radioOff;
 	private ButtonGroup radioOnOffGroup;
 	private JRadioButton radioSlide;
 	private JRadioButton radioRandom;
+	private JRadioButton radioFallDown;
 	private ButtonGroup radioAnimationMode;
 	private JSlider slider;
 	private JButton okButton;
@@ -99,28 +100,42 @@ public class AnimationSettingsDialog extends JDialog {
 		radioAnimationMode = new ButtonGroup();
 		radioSlide = new JRadioButton("Slide");
 		radioRandom = new JRadioButton("Random");
+		radioFallDown = new JRadioButton("Fall Down");
 		radioAnimationMode.add(radioSlide);
 		radioAnimationMode.add(radioRandom);
-		if (panel.digitalClockAnimation.mode == AnimationMode.slideMode) {
+		radioAnimationMode.add(radioFallDown);
+		if (panel.digitalClockAnimation.mode == AnimationMode.SLIDEMODE) {
 			radioSlide.setSelected(true);
-		} else if (panel.digitalClockAnimation.mode == AnimationMode.randomMode){
+		} else if (panel.digitalClockAnimation.mode == AnimationMode.RANDOMMODE){
 			radioRandom.setSelected(true);
+		} else if (panel.digitalClockAnimation.mode == AnimationMode.FALLDOWNMODE){
+			radioFallDown.setSelected(true);
 		}
 		// radioButtonのChangeListenerではradioButtonにフォーカスを当てるだけでイベントが発生し多発してしまうためActionListnerを使用
 		radioSlide.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				panel.digitalClockAnimation.mode = AnimationMode.slideMode;
+				slider.setEnabled(true);
+				panel.digitalClockAnimation.mode = AnimationMode.SLIDEMODE;
 			}
 		});
 		radioRandom.addActionListener(new ActionListener() {
 			@Override
 			public void actionPerformed(ActionEvent e) {
-				panel.digitalClockAnimation.mode = AnimationMode.randomMode;
+				slider.setEnabled(true);
+				panel.digitalClockAnimation.mode = AnimationMode.RANDOMMODE;
+			}
+		});
+		radioFallDown.addActionListener(new ActionListener() {
+			@Override
+			public void actionPerformed(ActionEvent e) {
+				slider.setEnabled(false);
+				panel.digitalClockAnimation.mode = AnimationMode.FALLDOWNMODE;
 			}
 		});
 		animationModePanel.add(radioSlide);
 		animationModePanel.add(radioRandom);
+		animationModePanel.add(radioFallDown);
 		constraints.gridx = RIGHT;
 		constraints.gridy = 1;
 		constraints.anchor = GridBagConstraints.WEST;

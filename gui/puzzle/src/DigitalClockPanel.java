@@ -1,14 +1,21 @@
 package puzzle;
 
+import java.awt.AlphaComposite;
 import java.awt.Color;
 import java.awt.Component;
+import java.awt.Composite;
 import java.awt.Dimension;
 import java.awt.Font;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 import java.util.Calendar;
+import java.util.Collections;
+import java.util.Date;
 import java.util.EventListener;
+import java.util.LinkedList;
+import java.util.List;
+import java.util.Random;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -136,8 +143,9 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 	}
 
 	public enum AnimationMode {
-		slideMode,
-		randomMode
+		SLIDEMODE,
+		RANDOMMODE,
+		FALLDOWNMODE
 	}
 
 	/**
@@ -147,7 +155,7 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 		private Dimension ownerPanelSize = new Dimension();
 		public Boolean isAnimationOn = false;
 		public int moveLength = 8;
-		public AnimationMode mode = AnimationMode.slideMode;
+		public AnimationMode mode = AnimationMode.SLIDEMODE;
 		private String message1 = "Digital Clock";
 		public String message2 = "Slide Pazzle Game";
 		private String timeHeader = "TIME:";
@@ -175,7 +183,7 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 		private int nowWeekX;
 		private int nowWeekX2;
 
-		// ランダムモードで使用するモード
+		// ランダムモードで使用するフィールド
 		private final int fontSize = 28;  // TODO: フォントを変更しても位置がそろえられるようにする
 		private final int colonSize = 13;  // TODO: フォントを変更しても位置がそろえられるようにする
 		private int hour1PositionX;
@@ -211,6 +219,15 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 		private int colon2PositionXDir;
 		private int colon2PositionYDir;
 
+		// ファールンダウンモードで使用するフィールド
+		private List<FallDownClock> fallDownClocks;
+		private int defaultFallDownClockNum = 2;
+		// デジタル時計の描画時間(0.5秒)に合わせて追加すると増えすぎるため調整する
+		private int fallDownPeriod = 10;
+		private int fallDownPeriodCount = 0;
+		private int alpha = 10;
+		private boolean isClockFadeout = false;
+
 		public Animation(Dimension size) {
 			ownerPanelSize = size;
 			defaultTimeX = panelMarginWidth;
@@ -224,6 +241,7 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 
 			initSlideMode();
 			initRandomMode();
+			initFallDownClockMode();
 		}
 
 		public void setDefaultTimeX(int x) {
@@ -279,6 +297,48 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 			colon2PositionYDir = initDirection(_moveLength);
 		}
 
+		private void initFallDownClockMode() {
+			fallDownClocks = Collections.synchronizedList(new LinkedList<FallDownClock>());
+			for (int i = 0; i < defaultFallDownClockNum; i++) {
+				addNewFallDownClocks();
+			}
+			isClockFadeout = false;
+		}
+
+		private void addNewFallDownClocks() {
+			Random r = new Random(new Date().getTime());
+			for (int i = 0; i < defaultFallDownClockNum; i++) {
+				FallDownClock clock = new FallDownClock(ownerPanelSize.width, ownerPanelSize.height);
+				// 時間、分、秒、:のどれを表示するかランダムに選択(秒の描画を多めに設定)
+				int random = r.nextInt(5);
+				switch (random) {
+				case 0:
+					clock.showTime = FallDownClock.ShowTimeTarget.HOUR;
+					break;
+				case 1:
+					clock.showTime = FallDownClock.ShowTimeTarget.MINUTE;
+					break;
+				case 2:
+					clock.showTime = FallDownClock.ShowTimeTarget.COLON;
+					break;
+				default:
+					clock.showTime = FallDownClock.ShowTimeTarget.SECOND;
+					break;
+				}
+				// 1の桁と10の桁のどちらを表示するかランダムに選択
+				random = r.nextInt(2);
+				switch (random) {
+				case 0:
+					clock.is1DigitShow = false;
+					break;
+				default:
+					clock.is1DigitShow = true;
+					break;
+				}
+				fallDownClocks.add(clock);
+			}
+		}
+
 		private int initDirection(int moveLeng) {
 			// 進行方向はランダム
 			return Math.random() > 0.5 ? moveLeng : -moveLeng;
@@ -292,7 +352,7 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 				weekMoveLength = clockMoveLength;
 
 			if (isAnimationOn) {
-				if (mode == AnimationMode.slideMode) {
+				if (mode == AnimationMode.SLIDEMODE) {
 					// メッセージを再表示
 					g.setFont(new Font("Gabriola", Font.PLAIN, 35));
 					g.setColor(Color.CYAN);
@@ -352,7 +412,7 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 						nowWeekX2 = (int)ownerPanelSize.getWidth() + defaultMessage1X;
 					}
 					g.drawString(getNowDate(), nowWeekX2, defaultWeekY);
-				} else if (mode == AnimationMode.randomMode) {
+				} else if (mode == AnimationMode.RANDOMMODE) {
 					g.setFont(new Font("Gabriola", Font.PLAIN, 35));
 					g.setColor(Color.CYAN);
 					g.drawString(message1, defaultMessage1X, defaultMessage1Y);
@@ -386,6 +446,73 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 					g.drawString(":", colon2PositionX, colon2PositionY);
 					g.drawString(String.valueOf(s / 10), second1PositionX, second1PositionY);
 					g.drawString(String.valueOf(s % 10), second2PositionX, second2PositionY);
+				} else if (mode == AnimationMode.FALLDOWNMODE) {
+					g.setFont(new Font("Gabriola", Font.PLAIN, 35));
+					g.setColor(Color.CYAN);
+					g.drawString(message1, defaultMessage1X, defaultMessage1Y);
+					g.drawString(message2, defaultMessage2X, defaultMessage2Y);
+
+					g.setFont(new Font("Gabriola", Font.PLAIN, 20));
+					g.setColor(clockFontColor);
+					g.drawString(timeHeader, defaultTimeX, 150);
+					String time = am;
+					Calendar now = Calendar.getInstance();
+					int h = now.get(Calendar.HOUR_OF_DAY);
+					if (h > 11) time = pm;
+					g.drawString(time, defaultTimeX + 50, 150);
+
+					g.setFont(new Font("Goudy Old Style", Font.PLAIN, 20));
+					g.setColor(Color.WHITE);
+					g.drawString(getNowDate(), defaultWeekX, defaultWeekY);
+
+					// 時計を表示
+					g.setColor(clockFontColor);
+					// TODO: コロンは表示したままにしたい
+					if (isClockFadeout) {
+						g.setFont(new Font(clockFont.getFamily(), Font.PLAIN, FallDownClock.FONTSIZE));
+						int m = now.get(Calendar.MINUTE);
+						int s= now.get(Calendar.SECOND);
+						for (int i = 0; i < fallDownClocks.size(); i++) {
+							FallDownClock clock = fallDownClocks.get(i);
+							if (clock.isLanding())
+								fallDownClocks.remove(i);
+							else {
+								clock.fall();
+								String showTime;
+								if (clock.showTime == FallDownClock.ShowTimeTarget.COLON) {
+									showTime = ":";
+								} else {
+									int t = 0;
+									if (clock.showTime == FallDownClock.ShowTimeTarget.HOUR)
+										t = h;
+									else if (clock.showTime == FallDownClock.ShowTimeTarget.MINUTE)
+										t = m;
+									else if (clock.showTime == FallDownClock.ShowTimeTarget.SECOND)
+										t = s;
+									showTime = clock.is1DigitShow == true ? String.valueOf(t % 10) : String.valueOf(t / 10);
+								}
+								g.drawString(showTime, clock.x, clock.y);
+							}
+						}
+						if (fallDownPeriodCount > fallDownPeriod) {
+							fallDownPeriodCount = 0;
+							addNewFallDownClocks();
+						} else {
+							fallDownPeriodCount++;
+						}
+					} else {
+						// 時計をフェードアウトさせる
+						g.setFont(clockFont);
+						Graphics2D g2 = (Graphics2D) g;
+						alpha--;
+						Composite comp = AlphaComposite.getInstance(AlphaComposite.SRC_OVER, alpha * .1f);
+						g2.setComposite(comp);
+						g.drawString(getNowTime(), defaultTimeX, defaultTimeY);
+						if (alpha == 0) {
+							isClockFadeout = true;
+							alpha = 10;
+						}
+					}
 				}
 			} else {
 				g.setFont(new Font("Gabriola", Font.PLAIN, 35));
@@ -513,6 +640,7 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 			isAnimationOn = false;
 			initSlideMode();
 			initRandomMode();
+			initFallDownClockMode();
 		}
 	}
 
@@ -541,19 +669,26 @@ public class DigitalClockPanel extends JPanel implements Runnable{
 		String dayOfWeek = "";
 		switch (now.get(Calendar.DAY_OF_WEEK)) {
 		case Calendar.SUNDAY:
-			dayOfWeek = "SUNDAY";
+			dayOfWeek = "Sunday";
+			break;
 		case Calendar.MONDAY:
-			dayOfWeek = "MONDAY";
+			dayOfWeek = "Monday";
+			break;
 		case Calendar.TUESDAY:
-			dayOfWeek = "TUESDAY";
+			dayOfWeek = "Tuesday";
+			break;
 		case Calendar.WEDNESDAY:
-			dayOfWeek = "WEDNESDAY";
+			dayOfWeek = "Wednesday";
+			break;
 		case Calendar.THURSDAY:
-			dayOfWeek = "THURSDAY";
+			dayOfWeek = "Thursday";
+			break;
 		case Calendar.FRIDAY:
-			dayOfWeek = "FRIDAY";
+			dayOfWeek = "Friday";
+			break;
 		case Calendar.SATURDAY:
-			dayOfWeek =  "SATURDAY";
+			dayOfWeek =  "Saturday";
+			break;
 		}
 		return String.format("%s, %02d/%02d, %04d", dayOfWeek, m, d, y);
 	}
